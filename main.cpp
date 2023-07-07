@@ -35,17 +35,21 @@ int main(int argc, char *argv[])
         Creating Variables Abstraction
         The CNF variables are the index of the V vector from 1 to the lenght of V
     */
-    struct tm start_date{}, end_date{};
+
+    // Storing time structures
+    struct tm start_date{}, end_date{}, start_time{}, end_time{};
 
     const char* buf = Json::writeString(builder, content["start_date"]).c_str() + 1;
-    printf("%s\n", buf);
     strptime( buf ,"%Y-%m-%d",  &start_date);
-    printf( "%d-%d-%d\n",  start_date.tm_year, start_date.tm_mon, start_date.tm_mday);
+    buf = Json::writeString(builder, content["end_date"]).c_str() + 1;
+    strptime( buf ,"%Y-%m-%d",  &end_date);
+    buf = Json::writeString(builder, content["start_time"]).c_str() + 1;
+    strptime( buf ,"%H:%M:%S",  &start_time);
+    buf = Json::writeString(builder, content["end_time"]).c_str() + 1;
+    strptime( buf ,"%H:%M:%S",  &end_time);
 
-    // buf = (char*) Json::writeString(builder, content["end_date"]).c_str();
-    // strptime( buf,"%Y-%m-%d",  &end_date);
-    // strftime(buf, 11, "%Y/%m/%d", &end_date);
-    // printf( "%s\n",  buf);
+
+
    return 0;
 }
 
