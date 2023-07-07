@@ -1,7 +1,9 @@
 #include <iostream>
 #include <fstream>
-#include <json/json.h>
+#include "json/single_include/nlohmann/json.hpp"
 #include <time.h>
+
+using json = nlohmann::json;
 
 void welcome();
 void print_help(char* pwd);
@@ -17,15 +19,13 @@ int main(int argc, char *argv[])
     // Getting Json
     char* infile = argv[1];
     char* outfile = argv[2];
-    std::ifstream input_file(infile, std::ifstream::binary);
-    Json::Value content;
-    Json::StreamWriterBuilder builder;
-    builder["indentation"] = "";
+    json content;
     try {
-        input_file >> content;
+        std::ifstream f(infile);
+        content = json::parse(f);
         // std::cout << content;
     }
-    catch(Json::RuntimeError) {
+    catch(json::parse_error) {
         std::cout << "An error occurred reading input file." << "\n\n";
         exit(EXIT_FAILURE);
     }
@@ -39,16 +39,12 @@ int main(int argc, char *argv[])
     // Storing time structures
     struct tm start_date{}, end_date{}, start_time{}, end_time{};
 
-    const char* buf = Json::writeString(builder, content["start_date"]).c_str() + 1;
-    strptime( buf ,"%Y-%m-%d",  &start_date);
-    buf = Json::writeString(builder, content["end_date"]).c_str() + 1;
-    strptime( buf ,"%Y-%m-%d",  &end_date);
-    buf = Json::writeString(builder, content["start_time"]).c_str() + 1;
-    strptime( buf ,"%H:%M:%S",  &start_time);
-    buf = Json::writeString(builder, content["end_time"]).c_str() + 1;
-    strptime( buf ,"%H:%M:%S",  &end_time);
+    strptime( content["start_date"].dump().c_str()+1 ,"%Y-%m-%d",  &start_date);
+    strptime( content["end_date"].dump().c_str()+1 ,"%Y-%m-%d",  &end_date);
+    strptime( content["start_time"].dump().c_str()+1 ,"%H:%M:%S",  &start_time);
+    strptime( content["end_time"].dump().c_str()+1 ,"%H:%M:%S",  &start_time);
 
-
+    
 
    return 0;
 }
