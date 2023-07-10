@@ -177,7 +177,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         // std::cout << "Block Start: " << block_start << "\n";
         
         // Contrains Local vs Local
-        f << "\nc\tContrains Local and Local in same day\n\n";
+        f << "\nc\tContrains Local and Local in same day " << "team " << i+1 << " \n\n";
         for (int rowj = 0; rowj < num_teams - 2; rowj++)
         {
             for (int rowk = rowj + 1; rowk < num_teams - 1 ; rowk++)
@@ -199,7 +199,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
 
         // Contrains Local vs Visiting
-        f << "\nc\tContrains Local and Visiting in same day\n\n";
+        f << "\nc\tContrains Local and Visiting in same day " << "team " << i+1 << " \n\n";
         for (int j = block_start; j < block_start + block_size ; j++)
         {
             int day = (j%num_times)/num_blocks_per_day;
@@ -227,7 +227,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
         
         // Contrains Visiting vs Visiting
-        f << "\nc\tContrains Visiting and Visiting in same day\n\n";
+        f << "\nc\tContrains Visiting and Visiting in same day " << "team " << i+1 << " \n\n";
         // Selecting 2 Blocks and one day
         for (int j = 0; j < num_teams - 1; j++)
         {
@@ -256,6 +256,83 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
                             if( k > i)
                             {
                                 rowk = k*block_size + i*num_times + num_blocks_per_day*day;
+                            }
+                            for (int u = 0; u < num_blocks_per_day; u++)
+                            {
+                                for (int v = 0; v < num_blocks_per_day; v++)
+                                {
+                                    f << - (rowj + u + 1) << ' ' << -(rowk + v + 1) << " 0\n";
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+    }
+
+    // No local or visiting games of same team in consecutive days
+    f << "\nc\tNo local or visiting games of same team in consecutive days\n";
+    for (int i = 0; i < num_teams; i++)
+    {
+        int block_size = num_times*(num_teams - 1);
+        int block_start = i*block_size;
+        // std::cout << "Block Size: " << block_size << "\n";
+        // std::cout << "Block Start: " << block_start << "\n";
+        
+        // Contrains Local vs Local
+        f << "\nc\tContrains Local and Local in consecutive days " << "team " << i+1 << " \n\n";
+        for (int rowj = 0; rowj < num_teams - 2; rowj++)
+        {
+            for (int rowk = rowj + 1; rowk < num_teams - 1 ; rowk++)
+            {
+                for (int day = 0; day < num_times/num_blocks_per_day - 1; day++)
+                {
+                    int ej = block_start + rowj*num_times + day*num_blocks_per_day;
+                    int ek = block_start + rowk*num_times + (day+1)*num_blocks_per_day;
+                    for (int u = 0; u < num_blocks_per_day; u++)
+                    {
+                        for (int v = 0; v < num_blocks_per_day; v++)
+                        {
+                            f << -(ej + 1 + u) << ' ' << -(ek + 1 + v) << " 0\n";
+                        }
+                        
+                    }
+                }
+            }
+        }
+        
+        // Contrains Visiting and Visiting
+        f << "\nc\tContrains Visiting and Visiting in consecutive days\n\n";
+        // Selecting 2 Blocks and one day
+        for (int j = 0; j < num_teams - 1; j++)
+        {
+            if( i != j )  {
+                for (int k = j+1; k < num_teams; k++)
+                {
+                    if ( i != k)
+                    {
+                        for (int day = 0; day < num_times/num_blocks_per_day-1; day++)
+                        {                           
+                            // Getting rows positions in each block
+                            int rowj;
+                            int rowk;
+                            if (j < i)
+                            {
+                                rowj = j*block_size + (i-1)*num_times + num_blocks_per_day*day;
+                            }
+                            if( j > i)
+                            {
+                                rowj = j*block_size + i*num_times + num_blocks_per_day*day;
+                            }
+                            if (k < i)
+                            {
+                                rowk = k*block_size + (i-1)*num_times + num_blocks_per_day*(day+1);
+                            }
+                            if( k > i)
+                            {
+                                rowk = k*block_size + i*num_times + num_blocks_per_day*(day+1);
                             }
                             for (int u = 0; u < num_blocks_per_day; u++)
                             {
