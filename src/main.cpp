@@ -9,7 +9,8 @@ using json = nlohmann::json;
 
 void welcome();
 void print_help(char* pwd);
-void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times, std::string filename );
+void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times,
+                    std::string filename, int num_teams, int num_blocks_per_day );
 
 int main(int argc, char *argv[])
 {
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
     // test_variables_accessing(variables);
 
     // Creating .cnf file and filling with restrictions
-    create_cnf_file( variables, times, outfile );
+    create_cnf_file( variables, times, outfile, teams.size(), num_blocks );
     
 
    return 0;
@@ -107,7 +108,8 @@ void print_help(char* pwd) {
     printf("\nUSAGE:\n\t%s <JSON-input-file> <output-file>\n", pwd);
 }
 
-void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times, std::string filename ) {
+void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times,
+                    std::string filename, int num_teams, int num_blocks_per_day ) {
     std::cout << "Creating CNF file: " << filename << ".cnf " <<  '\n';
     std::ofstream f(filename + ".cnf");
     if( !f.is_open() ){
@@ -155,15 +157,72 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     f << "\nc\tNo simultaneus games\n\n";
     for (int i = 0; i < num_times; i++)
     {
-        for (int j = 0; j < num; j++)
+        for (int j = 0; j < num - 1 ; j++)
         {
-            f << -(i+1 + j*num_times) << ' ';
+           for (int k = j+1; k < num; k++)
+           {
+            f << -(j*num_times + i + 1) << ' ' << -(k*num_times + i + 1) << " 0\n";            
+           }
+           
         }
-        f << "0\n";         
+    }
+
+    // Only one match of a team per day
+    f << "\nc\tOnly one match of a team per day\n\n";
+    for (int i = 0; i < num_teams; i++)
+    {
+        int block_size = num_times*(num_teams - 1);
+        int block_start = i*block_size;
+        // std::cout << "Block Size: " << block_size << "\n";
+        // std::cout << "Block Start: " << block_start << "\n";
+        
+        // Contrains Local vs Local
+        f << "\nc\tContrains Local vs Local\n\n";
+        for (int j = block_start; j < block_start + block_size - num_times; j++)
+        {
+            int next_row = (j/num_times + 1);
+            int day = (j%num_times)/num_blocks_per_day;
+            int next_match_day = block_start + next_row*num_times + num_blocks_per_day*day;
+            for (int k = next_match_day; k < next_match_day + num_blocks_per_day; k++)
+            {
+                f << -( j + 1 ) << ' ' << -(k + 1) << " 0\n";
+            }            
+        }
+
+        // Contrains Local vs Visiting
+        f << "\nc\tContrains Local vs Visiting\n\n";
+        for (int j = block_start; j < block_start + block_size ; j++)
+        {
+            int day = (j%num_times)/num_blocks_per_day;
+            for (int k = 0; k < num_teams; k++)
+            {
+                int visiting_block_start = k*block_size;
+                int visiting_match;
+                if (k < i)
+                {
+                    visiting_match = visiting_block_start + (i-1)*num_times + num_blocks_per_day*day;
+                }
+                if( k > i)
+                {
+                    visiting_match = visiting_block_start + i*num_times + num_blocks_per_day*day;
+                }
+                if( k != i )
+                {
+                    for (int s = visiting_match; s < visiting_match + num_blocks_per_day; s++)
+                    {
+                        f << -( j + 1 ) << ' ' << -(s + 1) << " 0\n";
+                    }
+                }
+                                
+            }
+        }
+        
+        // Contrains Visiting vs Visiting
+        f << "\nc\tContrains Visiting vs Visiting\n\n";
+               
+        
     }
     
-
-
     
     
 
