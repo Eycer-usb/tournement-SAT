@@ -177,7 +177,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         // std::cout << "Block Start: " << block_start << "\n";
         
         // Contrains Local vs Local
-        f << "\nc\tContrains Local vs Local\n\n";
+        f << "\nc\tContrains Local and Local in same day\n\n";
         for (int rowj = 0; rowj < num_teams - 2; rowj++)
         {
             for (int rowk = rowj + 1; rowk < num_teams - 1 ; rowk++)
@@ -199,7 +199,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
 
         // Contrains Local vs Visiting
-        f << "\nc\tContrains Local vs Visiting\n\n";
+        f << "\nc\tContrains Local and Visiting in same day\n\n";
         for (int j = block_start; j < block_start + block_size ; j++)
         {
             int day = (j%num_times)/num_blocks_per_day;
@@ -227,49 +227,45 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
         
         // Contrains Visiting vs Visiting
-        f << "\nc\tContrains Visiting vs Visiting\n\n";
-        for (int i = 0; i < num_teams; i++) // Selecting team as visitor
+        f << "\nc\tContrains Visiting and Visiting in same day\n\n";
+        // Selecting 2 Blocks and one day
+        for (int j = 0; j < num_teams - 1; j++)
         {
-            // Selecting 2 Blocks and one day
-            for (int j = 0; j < num_teams - 1; j++)
-            {
-                if(i != j )  {
-                    for (int k = j+1; k < num_teams; k++)
+            if( i != j )  {
+                for (int k = j+1; k < num_teams; k++)
+                {
+                    if ( i != k)
                     {
-                        if ( i != k)
-                        {
-                            for (int day = 0; day < num_times/num_blocks_per_day; day++)
-                            {                           
-                                // Getting rows positions in each block
-                                int rowj;
-                                int rowk;
-                                if (j < i)
+                        for (int day = 0; day < num_times/num_blocks_per_day; day++)
+                        {                           
+                            // Getting rows positions in each block
+                            int rowj;
+                            int rowk;
+                            if (j < i)
+                            {
+                                rowj = j*block_size + (i-1)*num_times + num_blocks_per_day*day;
+                            }
+                            if( j > i)
+                            {
+                                rowj = j*block_size + i*num_times + num_blocks_per_day*day;
+                            }
+                            if (k < i)
+                            {
+                                rowk = k*block_size + (i-1)*num_times + num_blocks_per_day*day;
+                            }
+                            if( k > i)
+                            {
+                                rowk = k*block_size + i*num_times + num_blocks_per_day*day;
+                            }
+                            for (int u = 0; u < num_blocks_per_day; u++)
+                            {
+                                for (int v = 0; v < num_blocks_per_day; v++)
                                 {
-                                    rowj = j*block_size + (i-1)*num_times + num_blocks_per_day*day;
-                                }
-                                if( j > i)
-                                {
-                                    rowj = j*block_size + i*num_times + num_blocks_per_day*day;
-                                }
-                                if (k < i)
-                                {
-                                    rowk = k*block_size + (i-1)*num_times + num_blocks_per_day*day;
-                                }
-                                if( k > i)
-                                {
-                                    rowk = k*block_size + i*num_times + num_blocks_per_day*day;
-                                }
-                                for (int u = 0; u < num_blocks_per_day; u++)
-                                {
-                                    for (int v = 0; v < num_blocks_per_day; v++)
-                                    {
-                                        f << - (rowj + u + 1) << ' ' << -(rowk + v + 1) << " 0\n";
-                                    }
+                                    f << - (rowj + u + 1) << ' ' << -(rowk + v + 1) << " 0\n";
                                 }
                             }
                         }
                     }
-                    
                 }
                 
             }
