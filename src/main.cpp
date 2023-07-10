@@ -119,11 +119,10 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     f << "c\n";
     f << "c\tGenerated CNF file for " << filename <<  ".ics " <<  " specification\n";
     f << "c\n";
-    f << "p cnf " << variables.size() << " TODO\n\n";
+    f << "p cnf " << variables.size() << " TODO\n";
     
     // Basic Constraints
     // At least 2 games per team
-    f << "c\tAt least 2 games per team\n\n";
     int i = 0;
     int m = times.size();
     while ( i < variables.size())
@@ -139,7 +138,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     }
 
     // Exactly two match per pair
-    f << "\nc\tExactly two match per pair\n\n";
     int num = variables.size() / times.size();
     int num_times = times.size();
     for (int i = 0; i < num; i++)
@@ -154,7 +152,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     }
 
     // No simultaneus games
-    f << "\nc\tNo simultaneus games\n\n";
     for (int i = 0; i < num_times; i++)
     {
         for (int j = 0; j < num - 1 ; j++)
@@ -168,7 +165,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     }
 
     // Only one match of a team per day
-    f << "\nc\tOnly one match of a team per day\n\n";
     for (int i = 0; i < num_teams; i++)
     {
         int block_size = num_times*(num_teams - 1);
@@ -177,7 +173,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         // std::cout << "Block Start: " << block_start << "\n";
         
         // Contrains Local vs Local
-        f << "\nc\tContrains Local and Local in same day " << "team " << i+1 << " \n\n";
         for (int rowj = 0; rowj < num_teams - 2; rowj++)
         {
             for (int rowk = rowj + 1; rowk < num_teams - 1 ; rowk++)
@@ -199,7 +194,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
 
         // Contrains Local vs Visiting
-        f << "\nc\tContrains Local and Visiting in same day " << "team " << i+1 << " \n\n";
         for (int j = block_start; j < block_start + block_size ; j++)
         {
             int day = (j%num_times)/num_blocks_per_day;
@@ -227,7 +221,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
         
         // Contrains Visiting vs Visiting
-        f << "\nc\tContrains Visiting and Visiting in same day " << "team " << i+1 << " \n\n";
         // Selecting 2 Blocks and one day
         for (int j = 0; j < num_teams - 1; j++)
         {
@@ -273,7 +266,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     }
 
     // No local or visiting games of same team in consecutive days
-    f << "\nc\tNo local or visiting games of same team in consecutive days\n";
     for (int i = 0; i < num_teams; i++)
     {
         int block_size = num_times*(num_teams - 1);
@@ -282,7 +274,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         // std::cout << "Block Start: " << block_start << "\n";
         
         // Contrains Local vs Local
-        f << "\nc\tContrains Local and Local in consecutive days " << "team " << i+1 << " \n\n";
         for (int rowj = 0; rowj < num_teams - 2; rowj++)
         {
             for (int rowk = rowj + 1; rowk < num_teams - 1 ; rowk++)
@@ -304,7 +295,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
         
         // Contrains Visiting and Visiting
-        f << "\nc\tContrains Visiting and Visiting in consecutive days\n\n";
         // Selecting 2 Blocks and one day
         for (int j = 0; j < num_teams - 1; j++)
         {
