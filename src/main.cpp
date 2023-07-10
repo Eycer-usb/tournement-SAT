@@ -120,6 +120,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     f << "c\tGenerated CNF file for " << filename <<  ".ics " <<  " specification\n";
     f << "c\n";
     f << "p cnf " << variables.size() << " TODO\n";
+    int counter = 0;
     
     // Basic Constraints
     // At least 2 games per team
@@ -133,6 +134,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         if ((i+1) % m == 0)
         {
             f << "0\n";
+            counter++;
         }
         i++;        
     }
@@ -147,6 +149,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
             for (int k = j+1; k < num_times; k++)
             {
                 f << - (j+1 + i*num_times) << ' ' << -(k+1 + i*num_times) << " 0\n";
+                counter++;
             }
         }
     }
@@ -158,7 +161,8 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         {
            for (int k = j+1; k < num; k++)
            {
-            f << -(j*num_times + i + 1) << ' ' << -(k*num_times + i + 1) << " 0\n";            
+            f << -(j*num_times + i + 1) << ' ' << -(k*num_times + i + 1) << " 0\n";
+            counter++;            
            }
            
         }
@@ -186,6 +190,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
                         for (int v = 0; v < num_blocks_per_day; v++)
                         {
                             f << -(ej + 1 + u) << ' ' << -(ek + 1 + v) << " 0\n";
+                            counter++;
                         }
                         
                     }
@@ -214,6 +219,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
                     for (int s = visiting_match; s < visiting_match + num_blocks_per_day; s++)
                     {
                         f << -( j + 1 ) << ' ' << -(s + 1) << " 0\n";
+                        counter++;
                     }
                 }
                                 
@@ -255,6 +261,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
                                 for (int v = 0; v < num_blocks_per_day; v++)
                                 {
                                     f << - (rowj + u + 1) << ' ' << -(rowk + v + 1) << " 0\n";
+                                    counter++;
                                 }
                             }
                         }
@@ -287,6 +294,8 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
                         for (int v = 0; v < num_blocks_per_day; v++)
                         {
                             f << -(ej + 1 + u) << ' ' << -(ek + 1 + v) << " 0\n";
+                            counter++;
+
                         }
                         
                     }
@@ -329,6 +338,7 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
                                 for (int v = 0; v < num_blocks_per_day; v++)
                                 {
                                     f << - (rowj + u + 1) << ' ' << -(rowk + v + 1) << " 0\n";
+                                    counter++;
                                 }
                             }
                         }
@@ -339,4 +349,22 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
     }
     f.close();
+
+    // std::cout << "Number of Clausules: " << counter << '\n';
+
+    // Updating Number of clausules in cnf file
+    std::ifstream file(filename + ".cnf"); // Open the file.
+    std::string new_file_content = "";
+    std::string line;
+    for (int i = 0; i < 3; i++) { // Read the first three lines of the file into new_file_content.
+        std::getline(file, line);
+        new_file_content += line + '\n';
+    }
+    std::getline(file, line); // Skip 4rd line
+    new_file_content += "p cnf " + std::to_string(variables.size()) + " " + std::to_string(counter) + "\n"; // Put modified 4rd line in new_file_content instead.
+    while (std::getline(file, line)) // Read the rest of the file in new_file_content.
+        new_file_content += line + '\n';
+    file.close(); // Close the file.
+    std::ofstream file_for_out( filename + ".cnf"); // Open the file for writing.
+    file_for_out << new_file_content; // Write the new file content into the file.
 }
