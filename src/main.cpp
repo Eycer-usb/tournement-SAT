@@ -178,15 +178,24 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         
         // Contrains Local vs Local
         f << "\nc\tContrains Local vs Local\n\n";
-        for (int j = block_start; j < block_start + block_size - num_times; j++)
+        for (int rowj = 0; rowj < num_teams - 2; rowj++)
         {
-            int next_row = (j/num_times + 1);
-            int day = (j%num_times)/num_blocks_per_day;
-            int next_match_day = block_start + next_row*num_times + num_blocks_per_day*day;
-            for (int k = next_match_day; k < next_match_day + num_blocks_per_day; k++)
+            for (int rowk = rowj + 1; rowk < num_teams - 1 ; rowk++)
             {
-                f << -( j + 1 ) << ' ' << -(k + 1) << " 0\n";
-            }            
+                for (int day = 0; day < num_times/num_blocks_per_day; day++)
+                {
+                    int ej = block_start + rowj*num_times + day*num_blocks_per_day;
+                    int ek = block_start + rowk*num_times + day*num_blocks_per_day;
+                    for (int u = 0; u < num_blocks_per_day; u++)
+                    {
+                        for (int v = 0; v < num_blocks_per_day; v++)
+                        {
+                            f << -(ej + 1 + u) << ' ' << -(ek + 1 + v) << " 0\n";
+                        }
+                        
+                    }
+                }
+            }
         }
 
         // Contrains Local vs Visiting
@@ -219,14 +228,52 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         
         // Contrains Visiting vs Visiting
         f << "\nc\tContrains Visiting vs Visiting\n\n";
-               
-        
+        for (int i = 0; i < num_teams; i++) // Selecting team as visitor
+        {
+            // Selecting 2 Blocks and one day
+            for (int j = 0; j < num_teams - 1; j++)
+            {
+                if(i != j )  {
+                    for (int k = j+1; k < num_teams; k++)
+                    {
+                        if ( i != k)
+                        {
+                            for (int day = 0; day < num_times/num_blocks_per_day; day++)
+                            {                           
+                                // Getting rows positions in each block
+                                int rowj;
+                                int rowk;
+                                if (j < i)
+                                {
+                                    rowj = j*block_size + (i-1)*num_times + num_blocks_per_day*day;
+                                }
+                                if( j > i)
+                                {
+                                    rowj = j*block_size + i*num_times + num_blocks_per_day*day;
+                                }
+                                if (k < i)
+                                {
+                                    rowk = k*block_size + (i-1)*num_times + num_blocks_per_day*day;
+                                }
+                                if( k > i)
+                                {
+                                    rowk = k*block_size + i*num_times + num_blocks_per_day*day;
+                                }
+                                for (int u = 0; u < num_blocks_per_day; u++)
+                                {
+                                    for (int v = 0; v < num_blocks_per_day; v++)
+                                    {
+                                        f << - (rowj + u + 1) << ' ' << -(rowk + v + 1) << " 0\n";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+                
+            }
+        }
     }
-    
-    
-    
-
-
-
     f.close();
 }
