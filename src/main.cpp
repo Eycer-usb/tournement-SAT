@@ -3,6 +3,7 @@
 #include "../json/single_include/nlohmann/json.hpp"
 #include <time.h>
 #include <vector>
+#include <sstream>
 #include "utils.hpp"
 
 using json = nlohmann::json;
@@ -12,6 +13,7 @@ void print_help(char* pwd);
 void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times,
                     std::string filename, int num_teams, int num_blocks_per_day );
 
+void create_ics_file ( std::vector<variable> variables, json::array_t teams, std::vector<time_t> times, std::string outfile );
 int main(int argc, char *argv[])
 {
     welcome();
@@ -94,6 +96,11 @@ int main(int argc, char *argv[])
     // Creating .cnf file and filling with restrictions
     create_cnf_file( variables, times, outfile, teams.size(), num_blocks );
     
+    // Executing SAT Solver and storing output in file
+    system(("./bin/glucose -model " + std::string(outfile) + ".cnf " + std::string(outfile) + ".out").c_str() );
+
+    // Parsing result in ics file
+    create_ics_file( variables, teams, times, outfile );
 
    return 0;
 }
@@ -350,6 +357,70 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     std::ofstream file_for_out( filename + ".cnf"); // Open the file for writing.
     if( !file_for_out.is_open() ){
         std::cout << "Error creating outputfile\n";
+        exit(EXIT_FAILURE);
+    }
+    file_for_out << f; // Write the new file content into the file.
+    file_for_out.close();
+}
+
+void init_ics( std::string& output )
+{
+    output += "BEGIN:VCALENDAR\r\n";
+    output += "PRODID:CI5437 AbrilJulio2023\r\n";
+    output += "METHOD:PUBLISH\r\n";
+    output += "VERSION:2.0\r\n";
+}
+void end_ics( std::string& output )
+{
+    output += "END:VCALENDAR\r\n";
+}
+
+void write_ics_event( std::string& output, std::string local, std::string visiting, time_t time ) {
+
+    char start_time[20];
+    char end_time[20];
+    std::strftime( start_time, 20, "%Y%m%dT%H%M%SZ", std::localtime(&time));
+    time = time + 2*60*60;
+    std::strftime( end_time, 20, "%Y%m%dT%H%M%SZ", std::localtime(&time));
+    output += "BEGIN:VEVENT\r\n";
+    output += "DTSTAMP:20230710T200500Z\r\n";
+    output += "DTSTART:" + std::string(start_time) + "\r\n";
+    output += "DTEND:" + std::string(end_time) + "\r\n";
+    output += "SUMMARY: CI5437 Tournement Match - " + local + " vs " + visiting + "\r\n";
+    output += "DESCRIPTION: Tournement Match - " + local + " vs " + visiting + "\r\n";
+    output += "LOCATION: Local of " + local + "\r\n";
+    output += "UID:" + std::string(start_time) + "\r\n";
+    output += "END:VEVENT\r\n";
+}
+
+void create_ics_file ( std::vector<variable> variables, json::array_t teams, std::vector<time_t> times, std::string outfile ) {
+    std::ifstream in( outfile + ".out" );
+    std::string line;
+    getline( in, line );
+    if (line == "UNSAT")
+    {
+        std::cout << "\nUnsatisfiable\n";
+        std::cout << "Skipping ICS file creation\n";
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "\nCreating ICS file\n";
+    std::istringstream is( line );
+    std::vector<int> v( ( std::istream_iterator<int>( is ) ), ( std::istream_iterator<int>() ) );
+    std::string f = "";
+    init_ics(f);
+    for( std::vector<int>::iterator i = v.begin(); i != v.end(); ++i )
+    {
+        if( *i > 0 ){
+            std::string local = teams[variables[*i-1].local_team].dump();
+            std::string visiting = teams[variables[*i-1].visiting_team].dump();
+            time_t t = times[variables[*i-1].time_index];
+            write_ics_event( f, local, visiting, t );
+        }
+    }
+    end_ics(f);
+    std::ofstream file_for_out( outfile + ".ics"); // Open the file for writing.
+    if( !file_for_out.is_open() ){
+        std::cout << "Error creating ics file\n";
         exit(EXIT_FAILURE);
     }
     file_for_out << f; // Write the new file content into the file.

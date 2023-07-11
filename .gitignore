@@ -4,3 +4,5 @@ tournement-SAT
 .vscode
 *.o
 *.cnf
+*.ics
+*.out
