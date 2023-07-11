@@ -1,3 +1,36 @@
+# Requerimientos
+
+- Se requiere el compilador g++ para c++ 11
+- Sistema operativo basado en Unix
+- Las herramientas Make y CMake 
+
+# Clonado del repositorio
+
+Este programa depende de 2 submodulos de github:
+- glucose: SAT Solver
+- json: Libreria para el manejo de archivos .json
+
+## Recursivo
+Se sugiere que para clonar el proyecto se utilice el siguiente comando para clonar recursivamente los submodulos de los que depende
+
+$ git clone --recurse-submodules https://github.com/Eycer-usb/tournement-SAT.git
+
+## Independiente
+Si se desea tambien se puede clonar por separado
+
+$ git clone https://github.com/Eycer-usb/tournement-SAT.git
+$ cd tournement-SAT
+$ git submodule init
+$ git submodule update
+
+# Compilacion
+El proyecto cuenta con un makefile para automatizar la compilacion y ciertas acciones. A continuacion la lista de opciones y su funcion
+
+- $ make : compila todo el proyecto incluyendo el SAT Solver. El nombre del archivo binario es tournement-SAT
+- $ make main : compila unicamente el codigo fuente del proyecto omitiendo el submodulo del solver.
+- $ make test : compila todo el proyecto y ejecuta el programa sobre todos los archivos .json en el directorio test/ y almacena los archivos resultantes asi como el log de las ejecuciones en el directorio results que se creara automaticamente en la raiz de proyecto.
+
+
 # Objetivo
 
 El objetivo de este proyecto es aprender a modelar un problema en CNF, y a usar un SAT solver para resolverlo, así como traducir la salida del SAT solver a un formato legible.
