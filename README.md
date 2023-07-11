@@ -13,15 +13,19 @@ Este programa depende de 2 submodulos de github:
 ## Recursivo
 Se sugiere que para clonar el proyecto se utilice el siguiente comando para clonar recursivamente los submodulos de los que depende
 
+```
 $ git clone --recurse-submodules https://github.com/Eycer-usb/tournement-SAT.git
+```
 
 ## Independiente
 Si se desea tambien se puede clonar por separado
 
+```
 $ git clone https://github.com/Eycer-usb/tournement-SAT.git
 $ cd tournement-SAT
 $ git submodule init
 $ git submodule update
+```
 
 # Compilacion
 El proyecto cuenta con un makefile para automatizar la compilacion y ciertas acciones. A continuacion la lista de opciones y su funcion
