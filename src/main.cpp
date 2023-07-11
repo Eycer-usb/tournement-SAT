@@ -1,3 +1,14 @@
+/*
+CI 5437 Artificial Inteligence I April-July 2023
+
+Tournement SAT scheadule generator 1.0 -- Using Glucose SAT solver
+
+Authors:
+    - Eros Cedeño
+    - Leonel Guerrero
+
+*/
+
 #include <iostream>
 #include <fstream>
 #include "../json/single_include/nlohmann/json.hpp"
@@ -13,11 +24,14 @@ void print_help(char* pwd);
 void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times,
                     std::string filename, int num_teams, int num_blocks_per_day );
 
-void create_ics_file ( std::vector<variable> variables, json::array_t teams, std::vector<time_t> times, std::string outfile );
+void create_ics_file ( std::vector<variable> variables, std::string tournement_name, json::array_t teams, std::vector<time_t> times, std::string outfile );
+
+
 int main(int argc, char *argv[])
 {
+    // Printing Welcome Message on start
     welcome();
-    if(argc < 3) {
+    if(argc < 3) { // Asserting correct input arguments
         print_help(argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -29,7 +43,6 @@ int main(int argc, char *argv[])
     try {
         std::ifstream f(infile);
         content = json::parse(f);
-        // std::cout << content;
     }
     catch(json::parse_error) {
         std::cout << "An error occurred reading input file." << "\n\n";
@@ -57,12 +70,8 @@ int main(int argc, char *argv[])
         start_time.tm_hour ++;
     }
 
-    // std::cout << start_time.tm_hour << " " << end_time.tm_hour << "\n";
-
-
     /* Unifying time */
     int num_blocks = (mktime(&end_time) - mktime(&start_time))/(2*60*60);
-    // std::cout << "Num Blocks " << num_blocks << "\n";
     start_time.tm_year = start_date.tm_year;
     start_time.tm_mon = start_date.tm_mon;
     start_time.tm_mday = start_date.tm_mday;
@@ -74,21 +83,14 @@ int main(int argc, char *argv[])
     std::vector<time_t> times;
     get_times_vector(times, &start_time, &end_time, num_blocks);
 
-    // std::cout << "Times Size: " << times.size() << '\n';
-
     // Getting teams or participans
     json::array_t teams = content["participants"];
-    // std::cout << "Number of teams: " << teams.size() << "\n";
-    // std::cout << "First Participant: " << teams[0] << "\n";
 
     /*
     Define structure for variables and create a array of variables
     */
-    
     std::vector<variable> variables;
     get_variables(variables, teams, times);
-
-    // std::cout << "Number of variables: " << variables.size() << '\n';
 
     // // Testing accessing to variables from vector
     // test_variables_accessing(variables);
@@ -100,27 +102,45 @@ int main(int argc, char *argv[])
     system(("./bin/glucose -model " + std::string(outfile) + ".cnf " + std::string(outfile) + ".out" + ">>/dev/null").c_str() );
 
     // Parsing result in ics file
-    create_ics_file( variables, teams, times, outfile );
+    std::string tournement_name = content["tournament_name"].dump();
+    create_ics_file( variables, tournement_name, teams, times, outfile );
+
+    // Exit Message
     std::cout << "Done!\n\n";
 
    return 0;
 }
 
-
+/*
+Welcome function print in stdin the version and credits
+*/
 void welcome() {
     printf("\nTournement SAT scheadule generator 1.0 -- Using Glucose SAT solver\n");
     printf("\nAuthors:\n\t- Eros Cedeño\n\t- Leonel Guerrero\n\n");
 }
 
+/*
+Usage Specification
+*/
 void print_help(char* pwd) {
     printf("\nUSAGE:\n\t%s <JSON-input-file> <output-file>\n", pwd);
 }
 
+/*
+Create the CNF file for the problem abstracted into the variables vector
+Args:
+    - variables:    A variables's vector abstraction
+    - times:        Posible times of games
+    - filename:     name (without extension) for the output cnf file
+    - num_teams:    Number of participants
+    - num_blocks_per_day:   What do you think ;) ?
+*/
 void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times,
                     std::string filename, int num_teams, int num_blocks_per_day ) {
+    // Showing starting function status message
     std::cout << "Creating CNF file: " << filename << ".cnf " <<  '\n';
-    std::string f = "";
-    int counter = 0;
+    std::string f = ""; // Content to write
+    int counter = 0;    // Number of clausules writen
     
     // Basic Constraints
     // At least 2 games per team
@@ -173,8 +193,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     {
         int block_size = num_times*(num_teams - 1);
         int block_start = i*block_size;
-        // std::cout << "Block Size: " << block_size << "\n";
-        // std::cout << "Block Start: " << block_start << "\n";
         
         // Contrains Local vs Local
         for (int rowj = 0; rowj < num_teams - 2; rowj++)
@@ -277,8 +295,6 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     {
         int block_size = num_times*(num_teams - 1);
         int block_start = i*block_size;
-        // std::cout << "Block Size: " << block_size << "\n";
-        // std::cout << "Block Start: " << block_start << "\n";
         
         // Contrains Local vs Local
         for (int rowj = 0; rowj < num_teams - 2; rowj++)
@@ -349,12 +365,13 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
         }
     }
 
+    // Concatenating the file' header
     f = "p cnf " + std::to_string(variables.size()) + ' ' + std::to_string(counter) +" \n" + f;
     f = "c\n" + f;
     f = "c\tGenerated CNF file for " + filename + ".ics " +  " specification\n" + f;
     f = "c\n" + f;
 
-    // std::cout << "Number of Clausules: " << counter << '\n';
+    // Creating and open outfile as a stream
     std::ofstream file_for_out( filename + ".cnf"); // Open the file for writing.
     if( !file_for_out.is_open() ){
         std::cout << "Error creating outputfile\n";
@@ -364,6 +381,9 @@ void create_cnf_file( std::vector<variable> variables, std::vector<time_t> times
     file_for_out.close();
 }
 
+/*
+Set the opening tags of a ics file into the output string
+*/
 void init_ics( std::string& output )
 {
     output += "BEGIN:VCALENDAR\r\n";
@@ -371,12 +391,20 @@ void init_ics( std::string& output )
     output += "METHOD:PUBLISH\r\n";
     output += "VERSION:2.0\r\n";
 }
+
+/*
+Set the closing tags of a ics file into the output string
+*/
 void end_ics( std::string& output )
 {
     output += "END:VCALENDAR\r\n";
 }
 
-void write_ics_event( std::string& output, std::string local, std::string visiting, time_t time ) {
+/*
+Insert a new event given the certain parameters
+*/
+void write_ics_event( std::string& output, std::string tournement_name,
+                    std::string local, std::string visiting, time_t time ) {
 
     char start_time[20];
     char end_time[20];
@@ -387,38 +415,70 @@ void write_ics_event( std::string& output, std::string local, std::string visiti
     output += "DTSTAMP:20230710T200500Z\r\n";
     output += "DTSTART:" + std::string(start_time) + "\r\n";
     output += "DTEND:" + std::string(end_time) + "\r\n";
-    output += "SUMMARY: CI5437 Tournement Match - " + local + " vs " + visiting + "\r\n";
+    output += "SUMMARY: " + tournement_name + " - " + local + " vs " + visiting + "\r\n";
     output += "DESCRIPTION: Tournement Match - " + local + " vs " + visiting + "\r\n";
     output += "LOCATION: Local of " + local + "\r\n";
     output += "UID:" + std::string(start_time) + "\r\n";
     output += "END:VEVENT\r\n";
 }
 
-void create_ics_file ( std::vector<variable> variables, json::array_t teams, std::vector<time_t> times, std::string outfile ) {
-    std::ifstream in( outfile + ".out" );
+/*
+Create the final ics file
+Args:
+    - variables:    A variables's vector abstraction
+    - teams:        The json array of participants
+    - times:        Posible times of games
+    - outputfile:   Name for the output file (no extension)
+*/
+void create_ics_file ( std::vector<variable> variables, std::string tournement_name, json::array_t teams,
+                        std::vector<time_t> times, std::string outfile ) {
+
+    // Getting the .out file containing the result state or UNSAT
     std::string line;
-    getline( in, line );
-    if (line == "UNSAT")
+    try
     {
-        std::cout << "\nUnsatisfiable\n";
-        std::cout << "Skipping ICS file creation\n";
-        exit(EXIT_FAILURE);
+        std::ifstream in( outfile + ".out" );
+        getline( in, line );
+        if (line == "UNSAT")
+        {
+            std::cout << "\nUnsatisfiable\n";
+            std::cout << "Skipping ICS file creation\n";
+            exit(EXIT_FAILURE);
+        }
     }
-    std::cout << "Creating ICS file "<< outfile << ".cnf " <<  '\n';
+    catch(const std::exception& e)
+    {
+        std::cout << "Error Getting " + outfile + ".out\n";
+        exit(EXIT_FAILURE);
+
+    }
+    // Printing Start message 
+    std::cout << "Creating ICS file "<< outfile << ".ics " <<  '\n';
+
+    
+    // Reading the vector of variables that satisfies the constrains
     std::istringstream is( line );
     std::vector<int> v( ( std::istream_iterator<int>( is ) ), ( std::istream_iterator<int>() ) );
     std::string f = "";
+
+    // Initializing ics file
     init_ics(f);
+
+    // Creating events
     for( std::vector<int>::iterator i = v.begin(); i != v.end(); ++i )
     {
         if( *i > 0 ){
             std::string local = teams[variables[*i-1].local_team].dump();
             std::string visiting = teams[variables[*i-1].visiting_team].dump();
             time_t t = times[variables[*i-1].time_index];
-            write_ics_event( f, local, visiting, t );
+            write_ics_event( f, tournement_name, local, visiting, t );
         }
     }
+
+    // Closing sintaxis tags
     end_ics(f);
+
+    // Writing out the output file
     std::ofstream file_for_out( outfile + ".ics"); // Open the file for writing.
     if( !file_for_out.is_open() ){
         std::cout << "Error creating ics file\n";
