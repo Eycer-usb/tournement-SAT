@@ -97,10 +97,11 @@ int main(int argc, char *argv[])
     create_cnf_file( variables, times, outfile, teams.size(), num_blocks );
     
     // Executing SAT Solver and storing output in file
-    system(("./bin/glucose -model " + std::string(outfile) + ".cnf " + std::string(outfile) + ".out").c_str() );
+    system(("./bin/glucose -model " + std::string(outfile) + ".cnf " + std::string(outfile) + ".out" + ">>/dev/null").c_str() );
 
     // Parsing result in ics file
     create_ics_file( variables, teams, times, outfile );
+    std::cout << "Done!\n\n";
 
    return 0;
 }
@@ -403,7 +404,7 @@ void create_ics_file ( std::vector<variable> variables, json::array_t teams, std
         std::cout << "Skipping ICS file creation\n";
         exit(EXIT_FAILURE);
     }
-    std::cout << "\nCreating ICS file\n";
+    std::cout << "Creating ICS file "<< outfile << ".cnf " <<  '\n';
     std::istringstream is( line );
     std::vector<int> v( ( std::istream_iterator<int>( is ) ), ( std::istream_iterator<int>() ) );
     std::string f = "";
