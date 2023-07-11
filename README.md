@@ -35,6 +35,22 @@ El proyecto cuenta con un makefile para automatizar la compilacion y ciertas acc
 - **make test** : compila todo el proyecto y ejecuta el programa sobre todos los archivos .json en el directorio test/ y almacena los archivos resultantes asi como el log de las ejecuciones en el directorio results que se creara automaticamente en la raiz de proyecto.
 
 
+# Uso
+A continuacion la sintaxis de uso:
+```
+./tournement-SAT <JSON-input-file> <output-file>
+```
+- JSON-input-file: Archivo json con especificaciones del torneo.
+- output-file: Nombre de los archivos que se creara.
+
+Se generan 3 archivos:
+- ***.cnf:*** Con las restricciones del modelo
+- ***.out:*** Archivo con la salida del solver
+- ***.ics:*** Calendario con los eventos planificados.
+
+**Nota:** Ejecutar el programa sin argumentos muestra el mensaje de ayuda con la especificacion de uso
+
+
 # Objetivo
 
 El objetivo de este proyecto es aprender a modelar un problema en CNF, y a usar un SAT solver para resolverlo, así como traducir la salida del SAT solver a un formato legible.
