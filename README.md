@@ -30,9 +30,9 @@ git submodule update
 # Compilacion
 El proyecto cuenta con un makefile para automatizar la compilacion y ciertas acciones. A continuacion la lista de opciones y su funcion
 
-- $ make : compila todo el proyecto incluyendo el SAT Solver. El nombre del archivo binario es tournement-SAT
-- $ make main : compila unicamente el codigo fuente del proyecto omitiendo el submodulo del solver.
-- $ make test : compila todo el proyecto y ejecuta el programa sobre todos los archivos .json en el directorio test/ y almacena los archivos resultantes asi como el log de las ejecuciones en el directorio results que se creara automaticamente en la raiz de proyecto.
+- **make** : compila todo el proyecto incluyendo el SAT Solver. El nombre del archivo binario es tournement-SAT
+- **make main** : compila unicamente el codigo fuente del proyecto omitiendo el submodulo del solver.
+- **make test** : compila todo el proyecto y ejecuta el programa sobre todos los archivos .json en el directorio test/ y almacena los archivos resultantes asi como el log de las ejecuciones en el directorio results que se creara automaticamente en la raiz de proyecto.
 
 
 # Objetivo
